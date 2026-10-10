@@ -1,0 +1,408 @@
+<div class="page-container" dir="rtl">
+  <!-- Top Navigation & Header -->
+  <div class="header-section">
+    <div class="title-wrap">
+      <h2><i class="bi bi-shield-shaded text-primary"></i> الرقابة القانونية والمصادقة النهائية (الحافظ المساعد للملكية العقارية)</h2>
+      <p class="subtitle">التدقيق في سلامة العمليات العقارية، تصفية التحفظات، والترسيم النهائي بالسجل العقاري</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/files" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-right"></i> العودة إلى قائمة الملفات
+      </a>
+    </div>
+  </div>
+
+  <!-- Global Alert Message -->
+  <div *ngIf="message" class="alert" [ngClass]="messageType === 'success' ? 'alert-success' : 'alert-danger'">
+    <i class="bi" [ngClass]="messageType === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'"></i>
+    {{ message }}
+  </div>
+
+  <div *ngIf="loading && !file" class="loading-state">
+    <div class="spinner-border text-primary" role="status"></div>
+    <span>جاري تحميل بيانات الرسم والملف العقاري...</span>
+  </div>
+
+  <div class="verification-content" *ngIf="file">
+    
+    <!-- 1. Cadastral Identity & Transfer Summary Card -->
+    <div class="card cadastral-card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3><i class="bi bi-geo-alt-fill text-danger"></i> بطاقة الرسم العقاري وموضوع العملية</h3>
+        <span class="badge status-badge" [ngClass]="'status-' + file.status">
+          {{ statusLabel(file.status) }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="cadastral-box">
+              <span class="box-label">الرسم العقاري والمنطقة:</span>
+              <h4 class="box-val text-primary">{{ file.cadastralData?.titleName || file.lotNumber }}</h4>
+              <p class="box-sub"><i class="bi bi-building"></i> {{ file.cadastralData?.region || 'الإدارة الجهوية للملكية العقارية' }}</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="cadastral-box">
+              <span class="box-label">طبيعة العقار والمساحة:</span>
+              <h4 class="box-val">{{ file.cadastralData?.propertyType || 'عقار مبني / أرض' }}</h4>
+              <p class="box-sub"><i class="bi bi-aspect-ratio"></i> المساحة: <strong>{{ file.cadastralData?.surfaceM2 || 0 }} م²</strong></p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="cadastral-box">
+              <span class="box-label">معاملة نقل الملكية:</span>
+              <h4 class="box-val text-success">{{ file.cadastralData?.saleAmountTnd ? (file.cadastralData?.saleAmountTnd + ' د.ت') : 'معاملة رسمية' }}</h4>
+              <p class="box-sub"><i class="bi bi-clock-history"></i> تاريخ الإيداع: {{ file.filingDate }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transfer Flow Line -->
+        <div class="transfer-flow mt-3 p-3 bg-light rounded">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="owner-pill previous">
+              <span class="pill-title">المالك المقيد سابقاً (البائع / المتصرف):</span>
+              <strong>{{ file.cadastralData?.previousOwner || 'شركة النهوض العقاري الساحل' }}</strong>
+            </div>
+            <div class="flow-arrow">
+              <i class="bi bi-arrow-left text-primary fs-3"></i>
+              <span class="badge bg-primary">نقل ملكية وترسيم</span>
+            </div>
+            <div class="owner-pill next">
+              <span class="pill-title">المشتري الجديد (المكتسب للحق):</span>
+              <strong class="text-success">{{ file.cadastralData?.newOwner || 'السيد محمد بن علي الطرابلسي' }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Legal Non-Opposition & Charges Checklist (Audit du Conservateur) -->
+    <div class="card legal-audit-card mb-4">
+      <div class="card-header bg-navy text-white">
+        <h3><i class="bi bi-shield-check"></i> التحقق من خلو الرسم من الموانع القانونية (سجل العمليات والعقل)</h3>
+        <span class="badge bg-light text-dark">رقابة الحافظ المساعد</span>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">
+          يجب على الحافظ المساعد أو المتثبت الأعلى مراجعة سجل الموانع والاعتراضات اللحظية والتأكد من مطابقة السندات قبل وضع التأشيرة:
+        </p>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="check-item-card" [class.active]="legalChecks.noOpposition">
+              <div class="form-check form-switch d-flex align-items-center gap-3">
+                <input class="form-check-input" type="checkbox" id="check-opposition" [(ngModel)]="legalChecks.noOpposition">
+                <label class="form-check-label" for="check-opposition">
+                  <strong>خلو الرسم من العقل والقيود الاحتياطية</strong>
+                  <span class="d-block small text-muted">لا توجد عقلة تحفظية أو قيد احتياطي مانع من الترسيم.</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="check-item-card" [class.active]="legalChecks.cadastralMatching">
+              <div class="form-check form-switch d-flex align-items-center gap-3">
+                <input class="form-check-input" type="checkbox" id="check-cadastral" [(ngModel)]="legalChecks.cadastralMatching">
+                <label class="form-check-label" for="check-cadastral">
+                  <strong>مطابقة المثال الهندسي وحدود العقار</strong>
+                  <span class="d-block small text-muted">المثال الهندسي لديوان قيس الأراضي متطابق مع دفتر الرسم.</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="check-item-card" [class.active]="legalChecks.fiscalClearance">
+              <div class="form-check form-switch d-flex align-items-center gap-3">
+                <input class="form-check-input" type="checkbox" id="check-fiscal" [(ngModel)]="legalChecks.fiscalClearance">
+                <label class="form-check-label" for="check-fiscal">
+                  <strong>استيفاء المعاليم الجبائية والتسجيل</strong>
+                  <span class="d-block small text-muted">تم استخلاص كامل معاليم القباضة المالية والترسيم العقاري.</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="check-item-card" [class.active]="legalChecks.powersValid">
+              <div class="form-check form-switch d-flex align-items-center gap-3">
+                <input class="form-check-input" type="checkbox" id="check-powers" [(ngModel)]="legalChecks.powersValid">
+                <label class="form-check-label" for="check-powers">
+                  <strong>صحة صفة الأطراف والوكالات القانونية</strong>
+                  <span class="d-block small text-muted">الأهلية القانونية والتوكيلات مستوفية لكافة الشروط الشكلية.</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Documents Audit & Reservation Arbitration Table -->
+    <div class="card documents-card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3><i class="bi bi-file-earmark-check-fill text-success"></i> فحص وثائق الملف وتصفية تحفظات المتثبت الأول</h3>
+        <span class="count-badge bg-primary text-white">{{ verifiedDocsCount }} من {{ file.documents?.length || 0 }} وثائق مثبتة ({{ compliancePercentage }}%)</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>نوع الوثيقة والسند</th>
+                <th>المرجع والتاريخ</th>
+                <th>تدقيق المتثبت الأول</th>
+                <th>التحفظات والوضعية القانونية</th>
+                <th>قرار الحافظ المساعد (Arbitrage)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let doc of file.documents" [class.table-warning]="doc.hasReservation">
+                <td>
+                  <strong>{{ doc.type }}</strong>
+                </td>
+                <td>
+                  <span class="d-block text-secondary small">{{ doc.number }}</span>
+                  <span class="d-block text-muted small">{{ doc.date }}</span>
+                </td>
+                <td>
+                  <span class="badge doc-badge" [ngClass]="{
+                    'badge-verified': doc.status === 'VERIFIED',
+                    'badge-rejected': doc.status === 'REJECTED',
+                    'badge-pending': doc.status === 'PENDING'
+                  }">
+                    <i class="bi" [ngClass]="{
+                      'bi-check-circle-fill': doc.status === 'VERIFIED',
+                      'bi-x-circle-fill': doc.status === 'REJECTED',
+                      'bi-clock': doc.status === 'PENDING'
+                    }"></i>
+                    {{ documentStatusLabel(doc.status) }}
+                  </span>
+                </td>
+                <td>
+                  <div *ngIf="doc.hasReservation" class="reservation-pill">
+                    <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                    <strong>تحفظ قانوني:</strong> {{ doc.reservationText }}
+                  </div>
+                  <div *ngIf="!doc.hasReservation" class="text-success small">
+                    <i class="bi bi-check2"></i> {{ doc.notes || 'سند قانوني مطابق وسليم' }}
+                  </div>
+                </td>
+                <td>
+                  <div *ngIf="doc.hasReservation" class="btn-group btn-group-sm">
+                    <button 
+                      type="button" 
+                      class="btn" 
+                      [ngClass]="arbitrations[doc.id] === 'LIFTED' ? 'btn-success' : 'btn-outline-success'"
+                      (click)="setArbitration(doc.id, 'LIFTED')">
+                      <i class="bi bi-check-lg"></i> رفع التحفظ واعتماد السند
+                    </button>
+                    <button 
+                      type="button" 
+                      class="btn" 
+                      [ngClass]="arbitrations[doc.id] === 'MAINTAINED' ? 'btn-danger' : 'btn-outline-danger'"
+                      (click)="setArbitration(doc.id, 'MAINTAINED')">
+                      <i class="bi bi-x-lg"></i> تأكيد التحفظ
+                    </button>
+                  </div>
+                  <div *ngIf="!doc.hasReservation">
+                    <span class="badge bg-light text-success border border-success"><i class="bi bi-check-all"></i> مؤشر عليه</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Grand Livre Foncier Registration Visa & Decision Card -->
+    <div class="card decision-card mb-4">
+      <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <h3 class="text-white"><i class="bi bi-award-fill"></i> قرار الترسيم النهائي بالدفتر العقاري وتطهير الرسم</h3>
+        <span class="badge bg-light text-success fw-bold">القرار البات</span>
+      </div>
+      <div class="card-body">
+        
+        <!-- Registration References Preview -->
+        <div class="registration-meta-box p-3 mb-3 rounded border bg-light">
+          <div class="row text-center g-2">
+            <div class="col-md-3">
+              <span class="d-block text-muted small">رقم التضمين (Formalité):</span>
+              <strong class="text-primary">{{ file.registration?.formalityNumber || defaultFormalityNumber }}</strong>
+            </div>
+            <div class="col-md-3">
+              <span class="d-block text-muted small">رقم المجلد بالسجل:</span>
+              <strong class="text-dark">{{ file.registration?.volumeNumber || defaultVolumeNumber }}</strong>
+            </div>
+            <div class="col-md-3">
+              <span class="d-block text-muted small">رقم العدد / الصفحة:</span>
+              <strong class="text-dark">{{ file.registration?.folioNumber || defaultFolioNumber }}</strong>
+            </div>
+            <div class="col-md-3">
+              <span class="d-block text-muted small">تاريخ السريان القانوني:</span>
+              <strong class="text-success">{{ file.registration?.effectiveDate || 'فوري عند الترسيم' }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group mb-3">
+          <label for="final-visa-note" class="form-label fw-bold">نص التأشيرة الرسمية للحافظ المساعد للملكية العقارية:</label>
+          <textarea 
+            id="final-visa-note" 
+            class="form-control" 
+            [(ngModel)]="note" 
+            rows="3" 
+            placeholder="أدخل نص التأشيرة الرسمية للاعتماد أو أسباب الرفض والإرجاع..."></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions-toolbar">
+          <button 
+            type="button" 
+            class="btn btn-outline-secondary btn-action" 
+            *ngIf="file.status === 'APPROVED'"
+            (click)="openCertificateView()">
+            <i class="bi bi-file-earmark-pdf-fill text-danger"></i> معاينة شهادة الملكية الرسمية
+          </button>
+
+          <button 
+            type="button" 
+            class="btn btn-danger btn-action" 
+            *ngIf="file.status === 'AWAITING_FINAL_VERIFICATION' || file.status === 'UNDER_FINAL_VERIFICATION'"
+            [disabled]="loadingAction !== ''"
+            (click)="returnFile()">
+            <span class="spinner-border spinner-border-sm ms-1" *ngIf="loadingAction === 'return'" role="status"></span>
+            <i class="bi bi-arrow-counterclockwise" *ngIf="loadingAction !== 'return'"></i> 
+            إرجاع الملف للتصحيح واستيفاء الموجبات
+          </button>
+          
+          <button 
+            type="button" 
+            class="btn btn-success btn-action" 
+            *ngIf="file.status === 'AWAITING_FINAL_VERIFICATION' || file.status === 'UNDER_FINAL_VERIFICATION' || file.status === 'APPROVED'"
+            [disabled]="loadingAction !== '' || file.status === 'APPROVED'"
+            (click)="approve()">
+            <span class="spinner-border spinner-border-sm ms-1" *ngIf="loadingAction === 'approve'" role="status"></span>
+            <i class="bi bi-patch-check-fill" *ngIf="loadingAction !== 'approve'"></i> 
+            {{ file.status === 'APPROVED' ? 'تم الترسيم والمصادقة النهائية' : 'المصادقة والترسيم النهائي بالدفتر العقاري' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Official Real Estate Certificate Modal (شهادة الملكية العقارية الرسمية) -->
+  <div class="modal-backdrop-custom" *ngIf="showCertificateModal">
+    <div class="certificate-modal-dialog">
+      <div class="modal-controls no-print">
+        <button type="button" class="btn btn-primary btn-sm" (click)="printCertificate()">
+          <i class="bi bi-printer-fill"></i> طباعة الشهادة الرسمية (PDF)
+        </button>
+        <button type="button" class="btn btn-outline-primary btn-sm" (click)="goBackToFiles()">
+          <i class="bi bi-list-ul"></i> العودة إلى قائمة الملفات
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="closeCertificateView()">
+          <i class="bi bi-x-lg"></i> إغلاق
+        </button>
+      </div>
+
+      <!-- Official Certificate Sheet (Printable) -->
+      <div class="official-certificate-sheet" id="print-area">
+        <!-- Republic Header -->
+        <div class="cert-header text-center">
+          <h4>الجمهورية التونسية</h4>
+          <h5>وزارة أملاك الدولة والشؤون العقارية</h5>
+          <h3>ديوان قيس الأراضي والمسح العقاري والملكية العقارية</h3>
+          <p class="cert-sub">الإدارة الجهوية للملكية العقارية بتونس</p>
+          <hr class="cert-hr">
+          <div class="cert-title-badge">
+            <h2>شهادة ملكية عقارية رسمية</h2>
+            <p>مستخرجة من السجل العقاري طبقاً لأحكام مجلة الحقوق العينية</p>
+          </div>
+        </div>
+
+        <!-- Certificate Body -->
+        <div class="cert-body mt-4">
+          <div class="cert-meta-row d-flex justify-content-between mb-3">
+            <span><strong>رقم الشهادة:</strong> {{ file?.registration?.certificateNumber || defaultCertificateNumber }}</span>
+            <span><strong>تاريخ التسليم:</strong> {{ file?.registration?.effectiveDate || file?.filingDate }}</span>
+          </div>
+
+          <table class="table table-bordered cert-table">
+            <tbody>
+              <tr>
+                <td class="bg-light fw-bold" width="30%">اسم ورقم الرسم العقاري:</td>
+                <td><strong class="text-primary fs-5">{{ file?.cadastralData?.titleName || file?.lotNumber }}</strong></td>
+              </tr>
+              <tr>
+                <td class="bg-light fw-bold">الموقع والمنطقة العقارية:</td>
+                <td>{{ file?.cadastralData?.location || 'المنطقة الصناعية الشرقية، تونس' }}</td>
+              </tr>
+              <tr>
+                <td class="bg-light fw-bold">طبيعة العقار والمساحة:</td>
+                <td>{{ file?.cadastralData?.propertyType }} — بمساحة جملية قدرها <strong>{{ file?.cadastralData?.surfaceM2 }} م²</strong></td>
+              </tr>
+              <tr>
+                <td class="bg-light fw-bold">المالك الجديد المقيد بالسجل:</td>
+                <td><strong class="fs-5 text-success">{{ file?.cadastralData?.newOwner || 'السيد محمد بن علي الطرابلسي' }}</strong> (ملكية تامة وباتة)</td>
+              </tr>
+              <tr>
+                <td class="bg-light fw-bold">سند التملك والترسيم:</td>
+                <td>بموجب عقد البيع النهائي المضمن تحت عدد <strong>{{ file?.registration?.formalityNumber || defaultFormalityNumber }}</strong></td>
+              </tr>
+              <tr>
+                <td class="bg-light fw-bold">بيان التحملات والرهون:</td>
+                <td><span class="text-success fw-bold"><i class="bi bi-shield-check"></i> {{ file?.cadastralData?.chargesStatus || 'خالٍ من كل رهن أو قيد احتياطي' }}</span></td>
+              </tr>
+              <tr>
+                <td class="bg-light fw-bold">تنصيصات السجل العقاري:</td>
+                <td>المجلد: <strong>{{ file?.registration?.volumeNumber || defaultVolumeNumber }}</strong> — العدد / الصفحة: <strong>{{ file?.registration?.folioNumber || defaultFolioNumber }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="cert-footer mt-4 d-flex justify-content-between align-items-center">
+            <div class="cert-qr text-center">
+              <div class="qr-mock">
+                <i class="bi bi-qr-code fs-1"></i>
+              </div>
+              <span class="small text-muted d-block">رمز التحقق الرقمي الرسمي</span>
+            </div>
+            <div class="cert-signature text-center">
+              <p class="mb-1"><strong>الحافظ المساعد للملكية العقارية</strong></p>
+              <p class="text-muted small">تأشيرة وختم ديوان الملكية العقارية</p>
+              <div class="stamp-box">
+                <span>ختم الإدارة الجهوية</span>
+                <strong>معتمد ومسجل</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Standard Result Modal -->
+  <div class="modal-backdrop-custom" *ngIf="showSuccessModal">
+    <div class="custom-modal-dialog">
+      <div class="modal-icon" [ngClass]="modalType === 'approved' ? 'icon-success' : 'icon-warning'">
+        <i class="bi" [ngClass]="modalType === 'approved' ? 'bi-patch-check-fill' : 'bi-arrow-repeat'"></i>
+      </div>
+      <h3 class="modal-title">{{ modalTitle }}</h3>
+      <p class="modal-text">{{ modalMessage }}</p>
+      <div class="modal-btn-group">
+        <button type="button" class="btn btn-success" (click)="goBackToFiles()">
+          <i class="bi bi-list-ul"></i> العودة إلى قائمة الملفات
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="showSuccessModal = false">
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+

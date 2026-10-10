@@ -1,0 +1,36 @@
+<div class="debug-container">
+  <h1>🔧 Diagnostic ONPF API</h1>
+  
+  <div class="section">
+    <h2>API Configuration</h2>
+    <p><strong>URL API:</strong> {{ apiUrl }}</p>
+  </div>
+
+  <div class="section">
+    <h2>Tests</h2>
+    <button class="btn btn-info" (click)="checkHealth()" [disabled]="loading">
+      {{ loading ? 'Vérification...' : 'Vérifier Santé API' }}
+    </button>
+    <button class="btn btn-primary" (click)="testLogin()" [disabled]="loading">
+      {{ loading ? 'Test...' : 'Tester Login' }}
+    </button>
+    <button class="btn btn-secondary" (click)="checkToken()" [disabled]="loading">
+      Vérifier Token
+    </button>
+  </div>
+
+  <div class="section" *ngIf="error" style="color: red;">
+    <h3>❌ Erreur</h3>
+    <pre>{{ error }}</pre>
+  </div>
+
+  <div class="section" *ngIf="healthStatus" style="color: green;">
+    <h3>✅ Santé API</h3>
+    <pre>{{ healthStatus }}</pre>
+  </div>
+
+  <div class="section" *ngIf="loginResponse">
+    <h3>📊 Réponse Login</h3>
+    <pre>{{ loginResponse }}</pre>
+  </div>
+</div>

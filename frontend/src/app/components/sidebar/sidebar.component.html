@@ -1,0 +1,85 @@
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <h1>ديوان الملكية</h1>
+  </div>
+
+  <div class="user-info" *ngIf="currentUser">
+    <div class="user-avatar">{{ currentUser.fullName.charAt(0) }}</div>
+    <div class="user-details">
+      <p class="user-name">{{ currentUser.fullName }}</p>
+      <p class="user-role">{{ roleLabel }}</p>
+    </div>
+  </div>
+
+  <ul class="menu-list">
+    <li class="menu-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+      <a routerLink="/dashboard">
+        <i class="bi bi-speedometer2"></i>
+        <span>لوحة القيادة</span>
+      </a>
+    </li>
+
+    <li class="menu-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+      <a [routerLink]="['/files']">
+        <i class="bi bi-file-earmark"></i>
+        <span>جميع الملفات</span>
+      </a>
+    </li>
+
+    <li class="menu-item" *ngIf="canAccessStudy()" routerLinkActive="active">
+      <a [routerLink]="['/files']" [queryParams]="{ status: 'UNDER_STUDY' }">
+        <i class="bi bi-book"></i>
+        <span>الدراسة</span>
+      </a>
+    </li>
+
+    <li class="menu-item" *ngIf="canAccessVerification()" routerLinkActive="active">
+      <a [routerLink]="['/files']" [queryParams]="{ status: 'AWAITING_VERIFICATION' }">
+        <i class="bi bi-shield-check"></i>
+        <span>التثبت من الملفات</span>
+      </a>
+    </li>
+
+    <li class="menu-item" *ngIf="canAccessFinalVerification()" routerLinkActive="active">
+      <a [routerLink]="['/files']" [queryParams]="{ status: 'AWAITING_FINAL_VERIFICATION' }">
+        <i class="bi bi-check2-circle"></i>
+        <span>التثبت النهائي</span>
+      </a>
+    </li>
+
+    <li class="menu-item" routerLinkActive="active">
+      <a routerLink="/search">
+        <i class="bi bi-search"></i>
+        <span>البحث</span>
+      </a>
+    </li>
+
+    <li class="menu-item" routerLinkActive="active">
+      <a routerLink="/operations-log">
+        <i class="bi bi-clock-history"></i>
+        <span>سجل العمليات</span>
+      </a>
+    </li>
+
+    <li class="menu-item" *ngIf="canAccessUsers()" routerLinkActive="active">
+      <a routerLink="/users">
+        <i class="bi bi-people"></i>
+        <span>المستخدمون والصلاحيات</span>
+      </a>
+    </li>
+
+    <li class="menu-item" routerLinkActive="active">
+      <a routerLink="/settings">
+        <i class="bi bi-gear"></i>
+        <span>الإعدادات</span>
+      </a>
+    </li>
+  </ul>
+
+  <div class="sidebar-footer">
+    <button class="logout-btn" (click)="logout()">
+      <i class="bi bi-box-arrow-left"></i>
+      <span>تسجيل الخروج</span>
+    </button>
+  </div>
+</nav>

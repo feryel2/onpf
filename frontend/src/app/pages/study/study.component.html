@@ -1,0 +1,341 @@
+<div class="page-container" dir="rtl">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="title-wrap">
+      <h2><i class="bi bi-pencil-square text-primary"></i> دراسة وإعداد الملف العقاري (محرر النظام)</h2>
+      <p class="subtitle">ضبط البيانات الفنية للرسم، تدقيق أطراف المعاملة وإرفاق السندات والوثائق القانونية</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/files" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-right"></i> العودة إلى قائمة الملفات
+      </a>
+    </div>
+  </div>
+
+  <!-- Global Alert Message -->
+  <div *ngIf="message" class="alert" [ngClass]="messageType === 'success' ? 'alert-success' : 'alert-danger'">
+    <i class="bi" [ngClass]="messageType === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'"></i>
+    {{ message }}
+  </div>
+
+  <div *ngIf="loading && !file" class="loading-state">
+    <div class="spinner-border text-primary" role="status"></div>
+    <span>جاري تحميل بيانات الملف للدراسة...</span>
+  </div>
+
+  <div class="study-content" *ngIf="file">
+    
+    <!-- Quick File Header Bar -->
+    <div class="quick-file-bar mb-4 p-3 bg-light rounded border d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <span class="text-muted small">رقم الملف:</span>
+        <strong class="fs-5 text-primary ms-2">{{ file.fileNumber }}</strong>
+        <span class="text-muted small ms-3">رقم الرسم:</span>
+        <strong class="ms-1">{{ file.lotNumber }}</strong>
+      </div>
+      <div>
+        <span class="badge status-badge" [ngClass]="'status-' + file.status">
+          {{ statusLabel(file.status) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- 1. Cadastral Identity & Technical Data Form -->
+    <div class="card mb-4 border-primary-top">
+      <div class="card-header bg-white">
+        <h3><i class="bi bi-geo-alt-fill text-danger"></i> بطاقة الرسم العقاري والبيانات الفنية</h3>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="titleName" class="form-label fw-bold">اسم ورقم الرسم العقاري:</label>
+              <input 
+                type="text" 
+                id="titleName" 
+                class="form-control" 
+                [(ngModel)]="cadastral.titleName" 
+                placeholder="مثال: الرسم العقاري 48921 تونس 'الوفاء'">
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="region" class="form-label fw-bold">الإدارة الجهوية للملكية العقارية:</label>
+              <input 
+                type="text" 
+                id="region" 
+                class="form-control" 
+                [(ngModel)]="cadastral.region" 
+                placeholder="مثال: الإدارة الجهوية للملكية العقارية بتونس">
+            </div>
+          </div>
+
+          <div class="col-md-5">
+            <div class="form-group">
+              <label for="location" class="form-label fw-bold">الموقع والمنطقة العقارية:</label>
+              <input 
+                type="text" 
+                id="location" 
+                class="form-control" 
+                [(ngModel)]="cadastral.location" 
+                placeholder="مثال: المنطقة الصناعية الشرقية، تونس">
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="form-group">
+              <label for="surfaceM2" class="form-label fw-bold">المساحة الجملية (م²):</label>
+              <input 
+                type="number" 
+                id="surfaceM2" 
+                class="form-control" 
+                [(ngModel)]="cadastral.surfaceM2" 
+                placeholder="مثال: 1250">
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group">
+              <label for="propertyType" class="form-label fw-bold">طبيعة العقار وصبغته:</label>
+              <input 
+                type="text" 
+                id="propertyType" 
+                class="form-control" 
+                [(ngModel)]="cadastral.propertyType" 
+                placeholder="مثال: مقسم عقاري مهيأ (قطعة رقم 14)">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Parties, Rights & Transaction Details -->
+    <div class="card mb-4 border-success-top">
+      <div class="card-header bg-white">
+        <h3><i class="bi bi-people-fill text-success"></i> أطراف المعاملة والحقوق المالية والرهون</h3>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="previousOwner" class="form-label fw-bold">المالك المقيد سابقاً بالرسم (البائع / المتصرف):</label>
+              <input 
+                type="text" 
+                id="previousOwner" 
+                class="form-control" 
+                [(ngModel)]="cadastral.previousOwner" 
+                placeholder="مثال: شركة النهوض العقاري الساحل">
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="newOwner" class="form-label fw-bold">المشتري الجديد (المكتسب للحق العيني):</label>
+              <input 
+                type="text" 
+                id="newOwner" 
+                class="form-control text-success fw-bold" 
+                [(ngModel)]="cadastral.newOwner" 
+                placeholder="مثال: السيد محمد بن علي الطرابلسي (ب.ت.و عدد 08492014)">
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group">
+              <label for="saleAmountTnd" class="form-label fw-bold">مبلغ المعاملة أو القيمة المصرح بها (د.ت):</label>
+              <input 
+                type="number" 
+                id="saleAmountTnd" 
+                class="form-control" 
+                [(ngModel)]="cadastral.saleAmountTnd" 
+                placeholder="مثال: 285000">
+            </div>
+          </div>
+
+          <div class="col-md-8">
+            <div class="form-group">
+              <label for="chargesStatus" class="form-label fw-bold">بيان التحملات والرهون السابقة (إن وجدت):</label>
+              <input 
+                type="text" 
+                id="chargesStatus" 
+                class="form-control" 
+                [(ngModel)]="cadastral.chargesStatus" 
+                placeholder="مثال: تم التشطيب على الرهن البنكي السابق بموجب كتب رفع اليد المرفق">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Attached Legal Documents Management -->
+    <div class="card mb-4">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h3><i class="bi bi-file-earmark-text-fill text-info"></i> السندات والوثائق القانونية المرفقة بالملف</h3>
+        <button type="button" class="btn btn-sm btn-primary" (click)="openAddDocModal()">
+          <i class="bi bi-plus-lg"></i> إضافة وثيقة وسند جديد
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>نوع الوثيقة والسند</th>
+                <th>المرجع / الرقم</th>
+                <th>تاريخ الوثيقة</th>
+                <th>الملاحظات الفنية</th>
+                <th>حالة التثبت</th>
+                <th width="100px">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let doc of file.documents">
+                <td><strong>{{ doc.type }}</strong></td>
+                <td><span class="badge bg-light text-dark border">{{ doc.number }}</span></td>
+                <td>{{ doc.date }}</td>
+                <td><span class="text-secondary small">{{ doc.notes || 'سند قانوني مرفق' }}</span></td>
+                <td>
+                  <span class="badge" [ngClass]="{
+                    'bg-success': doc.status === 'VERIFIED',
+                    'bg-danger': doc.status === 'REJECTED',
+                    'bg-secondary': doc.status === 'PENDING'
+                  }">
+                    {{ doc.status === 'VERIFIED' ? 'مثبتة' : (doc.status === 'REJECTED' ? 'مرفوضة' : 'قيد الانتظار') }}
+                  </span>
+                </td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-outline-danger" (click)="deleteDoc(doc)" title="حذف الوثيقة">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+
+              <tr *ngIf="!file.documents || file.documents.length === 0">
+                <td colspan="6" class="text-center py-3 text-muted">
+                  لا توجد وثائق مرفقة بهذا الملف. انقر على « إضافة وثيقة وسند جديد » لإرفاق العقود والمؤيدات.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Study Report & Editor Notes -->
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <h3><i class="bi bi-journal-text text-secondary"></i> التقرير القانوني وملاحظات محرر النظام</h3>
+      </div>
+      <div class="card-body">
+        <div class="form-group mb-3">
+          <label for="study-notes" class="form-label fw-bold">تقرير دراسة الملف وتوجيهات الإحالة:</label>
+          <textarea 
+            id="study-notes" 
+            class="form-control" 
+            [(ngModel)]="notes" 
+            rows="4" 
+            placeholder="أدخل ملخص الدراسة القانونية وسلسلة التملك ومطابقة الوثائق مع الدفتر العقاري..."></textarea>
+        </div>
+
+        <div class="actions-toolbar d-flex justify-content-end gap-3 pt-3 border-top">
+          <button 
+            type="button" 
+            class="btn btn-outline-primary btn-action" 
+            [disabled]="saving"
+            (click)="save()">
+            <span class="spinner-border spinner-border-sm ms-1" *ngIf="saving"></span>
+            <i class="bi bi-save" *ngIf="!saving"></i> حفظ التعديلات والبيانات
+          </button>
+          
+          <button 
+            type="button" 
+            class="btn btn-success btn-action" 
+            [disabled]="sending"
+            (click)="send()">
+            <span class="spinner-border spinner-border-sm ms-1" *ngIf="sending"></span>
+            <i class="bi bi-send-check" *ngIf="!sending"></i> إحالة الملف إلى المتثبت القانوني
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Adding New Document -->
+  <div class="modal-backdrop-custom" *ngIf="showAddDocModal">
+    <div class="custom-modal-dialog">
+      <div class="modal-header d-flex justify-content-between align-items-center mb-3">
+        <h4 class="m-0 text-primary"><i class="bi bi-file-earmark-plus"></i> إرفاق وثيقة وسند جديد</h4>
+        <button type="button" class="btn-close" (click)="closeAddDocModal()"></button>
+      </div>
+
+      <div class="modal-body text-start">
+        <div class="form-group mb-3">
+          <label for="docType" class="form-label fw-bold">نوع السند أو الوثيقة:</label>
+          <select id="docType" class="form-select" [(ngModel)]="newDoc.type">
+            <option value="عقد بيع نهائي معرف به ومسجل بالقباضة">عقد بيع نهائي معرف به ومسجل بالقباضة</option>
+            <option value="شهادة إبراء ذمة وخلاص جبائي">شهادة إبراء ذمة وخلاص جبائي (معاليم التسجيل)</option>
+            <option value="شهادة رفع اليد والتشطيب على الرهن البنكي">شهادة رفع اليد والتشطيب على الرهن البنكي</option>
+            <option value="توكيل قنصلي خاص لنقل الملكية">توكيل قنصلي خاص لنقل الملكية</option>
+            <option value="مثال هندسي لديوان قيس الأراضي والمسح العقاري">مثال هندسي لديوان قيس الأراضي والمسح العقاري</option>
+            <option value="حكم قضائي بات في تغيير الصبغة أو القسمة">حكم قضائي بات في تغيير الصبغة أو القسمة</option>
+            <option value="شهادة ملكية قديمة مطابقة للأصل">شهادة ملكية قديمة مطابقة للأصل</option>
+          </select>
+        </div>
+
+        <div class="form-group mb-3">
+          <label for="docNumber" class="form-label fw-bold">رقم ومرجع الوثيقة:</label>
+          <input 
+            type="text" 
+            id="docNumber" 
+            class="form-control" 
+            [(ngModel)]="newDoc.number" 
+            placeholder="مثال: DOC-2026-8812">
+        </div>
+
+        <div class="form-group mb-3">
+          <label for="docDate" class="form-label fw-bold">تاريخ الوثيقة:</label>
+          <input 
+            type="date" 
+            id="docDate" 
+            class="form-control" 
+            [(ngModel)]="newDoc.date">
+        </div>
+
+        <div class="form-group mb-3">
+          <label for="docNotes" class="form-label fw-bold">ملاحظات خاصة بالسند:</label>
+          <input 
+            type="text" 
+            id="docNotes" 
+            class="form-control" 
+            [(ngModel)]="newDoc.notes" 
+            placeholder="مثال: مستوف للشروط ومسجل بالقباضة">
+        </div>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-end gap-2 pt-3 border-top">
+        <button type="button" class="btn btn-secondary" (click)="closeAddDocModal()">إلغاء</button>
+        <button type="button" class="btn btn-primary" (click)="submitAddDoc()">
+          <i class="bi bi-plus-lg"></i> إرفاق الوثيقة
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Assign Modal -->
+  <div class="modal-backdrop-custom" *ngIf="showSuccessModal">
+    <div class="custom-modal-dialog text-center">
+      <div class="modal-icon icon-success mb-3">
+        <i class="bi bi-send-check-fill fs-1 text-success"></i>
+      </div>
+      <h3 class="modal-title">{{ modalTitle }}</h3>
+      <p class="modal-text">{{ modalMessage }}</p>
+      <div class="modal-btn-group mt-4">
+        <button type="button" class="btn btn-primary" (click)="goBackToFiles()">
+          <i class="bi bi-list-ul"></i> العودة إلى قائمة الملفات
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+

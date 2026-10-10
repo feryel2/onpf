@@ -1,0 +1,99 @@
+<div class="dashboard">
+  <h2>لوحة القيادة</h2>
+
+  <div class="statistics-grid" *ngIf="statistics">
+    <div class="stat-card">
+      <div class="stat-icon total">
+        <i class="bi bi-file-earmark"></i>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">إجمالي الملفات</p>
+        <p class="stat-value">{{ statistics.totalFiles }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon new">
+        <i class="bi bi-file-plus"></i>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">ملفات جديدة</p>
+        <p class="stat-value">{{ statistics.newFiles }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon study">
+        <i class="bi bi-book"></i>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">قيد الدراسة</p>
+        <p class="stat-value">{{ statistics.underStudy }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon pending">
+        <i class="bi bi-hourglass-split"></i>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">في انتظار التثبت</p>
+        <p class="stat-value">{{ statistics.awaitingVerification }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon returned">
+        <i class="bi bi-reply-fill"></i>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">مرجعة للتصحيح</p>
+        <p class="stat-value">{{ statistics.returnedForCorrection }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon final">
+        <i class="bi bi-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">في انتظار التثبت النهائي</p>
+        <p class="stat-value">{{ statistics.awaitingFinalVerification }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon verifying">
+        <i class="bi bi-check2-circle"></i>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">قيد التثبت النهائي</p>
+        <p class="stat-value">{{ statistics.underFinalVerification }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon approved">
+        <i class="bi bi-check-all"></i>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">مصادق عليها</p>
+        <p class="stat-value">{{ statistics.approved }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon closed">
+        <i class="bi bi-folder-check"></i>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">مغلقة</p>
+        <p class="stat-value">{{ statistics.closed }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading" *ngIf="!statistics">
+    جاري تحميل البيانات...
+  </div>
+</div>

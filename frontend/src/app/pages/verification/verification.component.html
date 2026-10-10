@@ -1,0 +1,222 @@
+<div class="page-container" dir="rtl">
+  <div class="header-section">
+    <div class="title-wrap">
+      <h2><i class="bi bi-shield-check"></i> التثبت من الملف العقاري</h2>
+      <p class="subtitle">مراجعة البيانات والوثائق القانونية قبل الإحالة إلى المتثبت الأعلى</p>
+    </div>
+    <a routerLink="/files" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-right"></i> العودة إلى قائمة الملفات
+    </a>
+  </div>
+
+  <div *ngIf="message" class="alert" [ngClass]="messageType === 'success' ? 'alert-success' : 'alert-danger'">
+    <i class="bi" [ngClass]="messageType === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'"></i>
+    {{ message }}
+  </div>
+
+  <div *ngIf="loading && !file" class="loading-state">
+    <div class="spinner-border text-primary" role="status"></div>
+    <span>جاري تحميل بيانات الملف...</span>
+  </div>
+
+  <div class="verification-content" *ngIf="file">
+    <!-- 1. Cadastral Identity & Transfer Summary Card -->
+    <div class="card cadastral-card mb-4 border-primary-top">
+      <div class="card-header d-flex justify-content-between align-items-center bg-white">
+        <h3><i class="bi bi-geo-alt-fill text-danger"></i> بطاقة الرسم العقاري وتدقيق أطراف المعاملة</h3>
+        <span class="badge status-badge" [ngClass]="'status-' + file.status">
+          {{ statusLabel(file.status) }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="cadastral-box p-3 bg-light rounded border">
+              <span class="text-muted small d-block">الرسم العقاري والمنطقة:</span>
+              <h4 class="text-primary m-0 mt-1 fs-5 fw-bold">{{ file.cadastralData?.titleName || file.lotNumber }}</h4>
+              <p class="text-secondary small m-0 mt-1"><i class="bi bi-building"></i> {{ file.cadastralData?.region || 'الإدارة الجهوية للملكية العقارية' }}</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="cadastral-box p-3 bg-light rounded border">
+              <span class="text-muted small d-block">طبيعة العقار والمساحة:</span>
+              <h4 class="m-0 mt-1 fs-5 fw-bold">{{ file.cadastralData?.propertyType || 'عقار مبني / مقسم' }}</h4>
+              <p class="text-secondary small m-0 mt-1"><i class="bi bi-aspect-ratio"></i> المساحة: <strong>{{ file.cadastralData?.surfaceM2 || 0 }} م²</strong></p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="cadastral-box p-3 bg-light rounded border">
+              <span class="text-muted small d-block">معاملة نقل الملكية:</span>
+              <h4 class="text-success m-0 mt-1 fs-5 fw-bold">{{ file.cadastralData?.saleAmountTnd ? (file.cadastralData?.saleAmountTnd + ' د.ت') : 'معاملة رسمية' }}</h4>
+              <p class="text-secondary small m-0 mt-1"><i class="bi bi-clock-history"></i> تاريخ الإيداع: {{ file.filingDate }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transfer Flow Line -->
+        <div class="transfer-flow mt-3 p-3 bg-white border rounded">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="owner-pill previous">
+              <span class="text-muted small d-block">المالك المقيد سابقاً (البائع):</span>
+              <strong class="text-dark">{{ file.cadastralData?.previousOwner || 'المالك السابق' }}</strong>
+            </div>
+            <div class="flow-arrow text-center">
+              <i class="bi bi-arrow-left text-primary fs-3"></i>
+              <span class="badge bg-primary d-block">نقل ملكية وترسيم</span>
+            </div>
+            <div class="owner-pill next">
+              <span class="text-muted small d-block">المشتري الجديد (المكتسب للحق):</span>
+              <strong class="text-success">{{ file.cadastralData?.newOwner || 'المشتري الجديد' }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legal Documents Verification Table -->
+    <div class="card documents-card mb-4">
+      <div class="card-header">
+        <h3><i class="bi bi-file-earmark-check"></i> الوثائق القانونية المرفقة للتثبت</h3>
+        <span class="count-badge">{{ file.documents?.length || 0 }} وثائق</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive" *ngIf="file.documents && file.documents.length > 0; else noDocs">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>نوع الوثيقة</th>
+                <th>رقم الوثيقة</th>
+                <th>تاريخها</th>
+                <th>حالة الوثيقة</th>
+                <th style="min-width: 200px;">ملاحظات الوثيقة</th>
+                <th style="min-width: 220px;" class="text-center">قرار التثبت</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let doc of file.documents" [class.table-success]="doc.status === 'VERIFIED'" [class.table-danger]="doc.status === 'REJECTED'">
+                <td>
+                  <strong>{{ doc.type }}</strong>
+                </td>
+                <td>{{ doc.number }}</td>
+                <td>{{ doc.date }}</td>
+                <td>
+                  <span class="badge doc-badge" [ngClass]="{
+                    'badge-verified': doc.status === 'VERIFIED',
+                    'badge-rejected': doc.status === 'REJECTED',
+                    'badge-pending': doc.status === 'PENDING'
+                  }">
+                    <i class="bi" [ngClass]="{
+                      'bi-check-circle-fill': doc.status === 'VERIFIED',
+                      'bi-x-circle-fill': doc.status === 'REJECTED',
+                      'bi-clock': doc.status === 'PENDING'
+                    }"></i>
+                    {{ documentStatusLabel(doc.status) }}
+                  </span>
+                </td>
+                <td>
+                  <input 
+                    type="text" 
+                    class="form-control form-control-sm" 
+                    [(ngModel)]="docNotes[doc.id]" 
+                    placeholder="أدخل ملاحظات حول هذه الوثيقة...">
+                </td>
+                <td class="text-center">
+                  <div class="btn-group" role="group">
+                    <button 
+                      type="button" 
+                      class="btn btn-sm btn-outline-success" 
+                      [class.active]="doc.status === 'VERIFIED'"
+                      [disabled]="actionLoading[doc.id]"
+                      (click)="verifyDocument(doc, 'APPROVED')">
+                      <i class="bi bi-check-lg"></i> قبول (Approuver)
+                    </button>
+                    <button 
+                      type="button" 
+                      class="btn btn-sm btn-outline-danger" 
+                      [class.active]="doc.status === 'REJECTED'"
+                      [disabled]="actionLoading[doc.id]"
+                      (click)="verifyDocument(doc, 'REJECTED')">
+                      <i class="bi bi-x-lg"></i> رفض (Rejeter)
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ng-template #noDocs>
+          <div class="p-4 text-center text-muted">
+            <i class="bi bi-folder-x fs-2 d-block mb-2"></i>
+            لا توجد وثائق مرفقة بهذا الملف حالياً.
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Final Decision Card -->
+    <div class="card decision-card">
+      <div class="card-header">
+        <h3><i class="bi bi-clipboard-check"></i> قرار التثبت النهائي على الملف</h3>
+      </div>
+      <div class="card-body">
+        <div class="form-group mb-3">
+          <label for="verification-note" class="form-label fw-bold">تقرير وملاحظات المتثبت:</label>
+          <textarea 
+            id="verification-note" 
+            class="form-control" 
+            [(ngModel)]="note" 
+            rows="4" 
+            placeholder="أدخل التقرير الشامل أو أسباب الإرجاع للتصحيح..."></textarea>
+        </div>
+
+        <!-- Inline Feedback in Decision Card -->
+        <div *ngIf="message" class="alert mt-3" [ngClass]="messageType === 'success' ? 'alert-success' : 'alert-danger'">
+          <i class="bi" [ngClass]="messageType === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'"></i>
+          {{ message }}
+        </div>
+
+        <div class="actions-toolbar">
+          <button 
+            type="button" 
+            class="btn btn-danger btn-action" 
+            [disabled]="loadingAction !== ''"
+            (click)="returnFile()">
+            <span class="spinner-border spinner-border-sm ms-1" *ngIf="loadingAction === 'return'" role="status"></span>
+            <i class="bi bi-arrow-counterclockwise" *ngIf="loadingAction !== 'return'"></i> 
+            إرجاع للتصحيح إلى المحرر
+          </button>
+          
+          <button 
+            type="button" 
+            class="btn btn-primary btn-action" 
+            [disabled]="loadingAction !== ''"
+            (click)="approve()">
+            <span class="spinner-border spinner-border-sm ms-1" *ngIf="loadingAction === 'approve'" role="status"></span>
+            <i class="bi bi-check2-all" *ngIf="loadingAction !== 'approve'"></i> 
+            مصادقة وإحالة إلى المتثبت الأعلى
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success / Result Modal Dialog -->
+  <div class="modal-backdrop-custom" *ngIf="showSuccessModal">
+    <div class="custom-modal-dialog">
+      <div class="modal-icon" [ngClass]="modalType === 'approved' ? 'icon-success' : 'icon-warning'">
+        <i class="bi" [ngClass]="modalType === 'approved' ? 'bi-check-circle-fill' : 'bi-arrow-repeat'"></i>
+      </div>
+      <h3 class="modal-title">{{ modalTitle }}</h3>
+      <p class="modal-text">{{ modalMessage }}</p>
+      <div class="modal-btn-group">
+        <button type="button" class="btn btn-primary" (click)="goBackToFiles()">
+          <i class="bi bi-list-ul"></i> العودة إلى قائمة الملفات
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="showSuccessModal = false">
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

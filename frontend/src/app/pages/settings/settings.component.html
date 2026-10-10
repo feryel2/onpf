@@ -1,0 +1,51 @@
+<div class="settings-page page-container" dir="rtl">
+	<header class="page-heading">
+		<h2><i class="bi bi-gear"></i> الإعدادات</h2>
+	</header>
+
+	<section class="account-section" *ngIf="currentUser">
+		<div class="section-heading">
+			<div>
+				<h3>الحساب الحالي</h3>
+				<p>معلومات الجلسة المسجلة حالياً.</p>
+			</div>
+			<span class="role-badge">{{ auth.getRoleLabel(currentUser.role) }}</span>
+		</div>
+		<dl class="account-details">
+			<div><dt>الاسم الكامل</dt><dd>{{ currentUser.fullName }}</dd></div>
+			<div><dt>اسم الدخول</dt><dd>{{ currentUser.username }}</dd></div>
+			<div><dt>البريد الإلكتروني</dt><dd>{{ currentUser.email }}</dd></div>
+		</dl>
+	</section>
+
+	<section class="password-section">
+		<div class="section-heading">
+			<div>
+				<h3>تغيير كلمة المرور</h3>
+				<p>أدخل كلمة المرور الحالية ثم اختر كلمة مرور جديدة لا تقل عن 8 أحرف.</p>
+			</div>
+		</div>
+
+		<div *ngIf="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+		<div *ngIf="successMessage" class="alert alert-success" role="status">{{ successMessage }}</div>
+
+		<form class="password-form" (ngSubmit)="changePassword()">
+			<div class="form-field">
+				<label for="current-password">كلمة المرور الحالية</label>
+				<input id="current-password" class="form-control" type="password" name="currentPassword" [(ngModel)]="currentPassword" required autocomplete="current-password">
+			</div>
+			<div class="form-field">
+				<label for="new-password">كلمة المرور الجديدة</label>
+				<input id="new-password" class="form-control" type="password" name="newPassword" [(ngModel)]="newPassword" minlength="8" required autocomplete="new-password">
+			</div>
+			<div class="form-field">
+				<label for="confirm-password">تأكيد كلمة المرور الجديدة</label>
+				<input id="confirm-password" class="form-control" type="password" name="confirmPassword" [(ngModel)]="confirmPassword" minlength="8" required autocomplete="new-password">
+			</div>
+			<button class="btn btn-primary" type="submit" [disabled]="saving || !currentPassword || !newPassword || !confirmPassword">
+				<span *ngIf="saving" class="spinner-border spinner-border-sm ms-1" role="status"></span>
+				حفظ كلمة المرور
+			</button>
+		</form>
+	</section>
+</div>

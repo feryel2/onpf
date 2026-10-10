@@ -1,0 +1,126 @@
+<div class="page-container" dir="rtl">
+  <div class="header-section">
+    <div class="title-wrap">
+      <h2><i class="bi bi-file-earmark-text"></i> تفاصيل الملف العقاري</h2>
+      <p class="subtitle" *ngIf="file">رقم الملف: {{ file.fileNumber }}</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/files" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-right"></i> العودة إلى القائمة
+      </a>
+      <a 
+        *ngIf="file && auth.hasRole('VERIFIER')" 
+        [routerLink]="['/verification', file.id]" 
+        class="btn btn-primary">
+        <i class="bi bi-shield-check"></i> الانتقال إلى التثبت
+      </a>
+      <a 
+        *ngIf="file && auth.hasRole('EDITOR')" 
+        [routerLink]="['/study', file.id]" 
+        class="btn btn-primary">
+        <i class="bi bi-book"></i> متابعة الدراسة
+      </a>
+      <a 
+        *ngIf="file && auth.hasRole('SENIOR_VERIFIER')" 
+        [routerLink]="['/final-verification', file.id]" 
+        class="btn btn-success">
+        <i class="bi bi-check2-circle"></i> التثبت النهائي
+      </a>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ errorMessage }}
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner-border text-primary" role="status"></div>
+    <span>جاري تحميل بيانات الملف...</span>
+  </div>
+
+  <div class="details-content" *ngIf="file && !loading">
+    <!-- Main Info Card -->
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3><i class="bi bi-info-circle"></i> المعلومات الأساسية</h3>
+        <span class="badge status-badge" [ngClass]="'status-' + file.status">
+          {{ statusLabel(file.status) }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <span class="text-muted d-block small">رقم الملف</span>
+            <strong>{{ file.fileNumber }}</strong>
+          </div>
+          <div class="col-md-3">
+            <span class="text-muted d-block small">رقم الرسم العقاري</span>
+            <strong>{{ file.lotNumber }}</strong>
+          </div>
+          <div class="col-md-3">
+            <span class="text-muted d-block small">تاريخ الإيداع</span>
+            <span>{{ file.filingDate }}</span>
+          </div>
+          <div class="col-md-3">
+            <span class="text-muted d-block small">المسؤول الحالي</span>
+            <span>{{ file.responsible || file.studyResponsible || 'غير معيّن' }}</span>
+          </div>
+          <div class="col-12 mt-3">
+            <span class="text-muted d-block small">موضوع الملف</span>
+            <p class="mb-0 p-2 bg-light rounded">{{ file.subject }}</p>
+          </div>
+          <div class="col-12" *ngIf="file.notes">
+            <span class="text-muted d-block small">الملاحظات والتقرير</span>
+            <p class="mb-0 p-2 bg-light rounded text-secondary">{{ file.notes }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents Card -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3><i class="bi bi-files"></i> الوثائق القانونية المرفقة</h3>
+        <span class="badge bg-secondary">{{ file.documents?.length || 0 }} وثائق</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive" *ngIf="file.documents && file.documents.length > 0; else noDocs">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>نوع الوثيقة</th>
+                <th>رقم الوثيقة</th>
+                <th>التاريخ</th>
+                <th>الحالة</th>
+                <th>ملاحظات</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let doc of file.documents">
+                <td><strong>{{ doc.type }}</strong></td>
+                <td>{{ doc.number }}</td>
+                <td>{{ doc.date }}</td>
+                <td>
+                  <span class="badge" [ngClass]="{
+                    'bg-success': doc.status === 'VERIFIED',
+                    'bg-danger': doc.status === 'REJECTED',
+                    'bg-warning text-dark': doc.status === 'PENDING'
+                  }">
+                    {{ documentStatusLabel(doc.status) }}
+                  </span>
+                </td>
+                <td>{{ doc.notes || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noDocs>
+          <div class="p-4 text-center text-muted">
+            لا توجد وثائق مرفقة بهذا الملف.
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>
+

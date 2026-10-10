@@ -1,0 +1,679 @@
+<div class="files-container" dir="rtl">
+  <div class="header-title-bar mb-3">
+    <h2><i class="bi bi-folder2-open"></i> إدارة الملفات العقارية</h2>
+    <button class="btn btn-primary" *ngIf="auth.hasRole('EDITOR')" (click)="openAddModal()">
+      <i class="bi bi-plus-lg"></i> إضافة ملف عقاري جديد
+    </button>
+  </div>
+  
+  <!-- Filter tabs & Search controls -->
+  <div class="filter-toolbar mb-3">
+    <div class="filter-tabs">
+      <button 
+        type="button" 
+        class="filter-tab" 
+        [class.active]="currentStatusFilter === 'ALL'"
+        (click)="setFilter('ALL')">
+        الكل (Tous)
+      </button>
+      <button 
+        type="button" 
+        class="filter-tab tab-verification" 
+        [class.active]="currentStatusFilter === 'AWAITING_VERIFICATION'"
+        (click)="setFilter('AWAITING_VERIFICATION')">
+        <i class="bi bi-clock-history"></i> في انتظار التثبت
+      </button>
+      <button 
+        type="button" 
+        class="filter-tab tab-in-verification" 
+        [class.active]="currentStatusFilter === 'UNDER_VERIFICATION'"
+        (click)="setFilter('UNDER_VERIFICATION')">
+        <i class="bi bi-shield-shaded"></i> قيد التثبت
+      </button>
+      <button 
+        type="button" 
+        class="filter-tab tab-study" 
+        [class.active]="currentStatusFilter === 'UNDER_STUDY'"
+        (click)="setFilter('UNDER_STUDY')">
+        <i class="bi bi-book"></i> قيد الدراسة
+      </button>
+      <button 
+        type="button" 
+        class="filter-tab tab-final" 
+        [class.active]="currentStatusFilter === 'AWAITING_FINAL_VERIFICATION'"
+        (click)="setFilter('AWAITING_FINAL_VERIFICATION')">
+        <i class="bi bi-check2-circle"></i> التثبت النهائي
+      </button>
+      <button 
+        type="button" 
+        class="filter-tab tab-approved" 
+        [class.active]="currentStatusFilter === 'APPROVED'"
+        (click)="setFilter('APPROVED')">
+        <i class="bi bi-check-all"></i> مصادق عليه
+      </button>
+    </div>
+
+    <div class="search-box">
+      <input 
+        type="text" 
+        class="form-control" 
+        placeholder="بحث برقم الملف، الرسم العقاري أو الموضوع..." 
+        [(ngModel)]="searchTerm" 
+        (ngModelChange)="applyLocalFilter()">
+    </div>
+  </div>
+
+  <div class="files-table">
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th>رقم الملف</th>
+          <th>الرسم العقاري</th>
+          <th>الموضوع</th>
+          <th>تاريخ الإيداع</th>
+          <th>الحالة</th>
+          <th>المسؤول</th>
+          <th style="min-width: 220px;">الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let file of filteredFiles">
+          <td><a [routerLink]="['/files', file.id]" class="fw-bold">{{ file.fileNumber }}</a></td>
+          <td>{{ file.lotNumber }}</td>
+          <td class="text-truncate" style="max-width: 260px;" [title]="file.subject">{{ file.subject }}</td>
+          <td>{{ file.filingDate }}</td>
+          <td>
+            <span class="badge" [ngClass]="'status-' + file.status">
+              {{ statusLabel(file.status) }}
+            </span>
+          </td>
+          <td>{{ file.responsible || file.studyResponsible || 'غير معيّن' }}</td>
+          <td>
+            <div class="btn-group" role="group">
+              <a [routerLink]="['/files', file.id]" class="btn btn-sm btn-outline-secondary" title="عرض التفاصيل">
+                <i class="bi bi-eye"></i> التفاصيل
+              </a>
+
+              <!-- Action button for verification -->
+              <a 
+                *ngIf="auth.hasRole('VERIFIER') && (file.status === 'AWAITING_VERIFICATION' || file.status === 'UNDER_VERIFICATION')" 
+                [routerLink]="['/verification', file.id]" 
+                class="btn btn-sm btn-primary" 
+                title="الانتقال إلى التثبت">
+                <i class="bi bi-shield-check"></i> التثبت
+              </a>
+
+              <!-- Action button for study -->
+              <a 
+                *ngIf="auth.hasRole('EDITOR') && (file.status === 'UNDER_STUDY' || file.status === 'NEW' || file.status === 'RETURNED_FOR_CORRECTION')" 
+                [routerLink]="['/study', file.id]" 
+                class="btn btn-sm btn-info text-white" 
+                title="الانتقال إلى دراسة الملف">
+                <i class="bi bi-book"></i> الدراسة
+              </a>
+
+              <!-- Action button for final verification -->
+              <a 
+                *ngIf="auth.hasRole('SENIOR_VERIFIER') && (file.status === 'AWAITING_FINAL_VERIFICATION' || file.status === 'UNDER_FINAL_VERIFICATION')" 
+                [routerLink]="['/final-verification', file.id]" 
+                class="btn btn-sm btn-success" 
+                title="الانتقال إلى التثبت النهائي">
+                <i class="bi bi-check2-circle"></i> التثبت النهائي
+              </a>
+
+              <!-- Action button for approved files -->
+              <a 
+                *ngIf="auth.hasRole('SENIOR_VERIFIER') && file.status === 'APPROVED'" 
+                [routerLink]="['/final-verification', file.id]" 
+                class="btn btn-sm btn-outline-success" 
+                title="معاينة شهادة الملكية والترسيم">
+                <i class="bi bi-award-fill"></i> الشهادة
+              </a>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="filteredFiles.length === 0 && !isLoading">
+          <td colspan="7" class="text-center py-4 text-muted">
+            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+            لا توجد ملفات مطابقة لمعايير البحث أو التصفية المختارة.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal for adding new file with modern interactive Stepper -->
+<div class="modal-overlay" [class.show]="showAddModal" (click)="closeAddModal()">
+  <div class="file-modal modern-stepper-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <div class="header-main">
+        <h3>إعداد ملف عقاري ومطلب ترسيم جديد</h3>
+        <p class="header-desc">بيانات المطلب والرسم والأطراف والوثائق القانونية المتوفرة.</p>
+      </div>
+      <button class="close-btn" (click)="closeAddModal()" title="إغلاق النافذة">×</button>
+    </div>
+
+    <!-- Quick Presets Bar -->
+    <div class="presets-toolbar" *ngIf="false">
+      <span class="presets-label"><i class="bi bi-lightning-charge-fill text-warning"></i> نماذج سريعة للتعبئة الفورية:</span>
+      <div class="preset-chips">
+        <button type="button" class="preset-chip" (click)="applyPreset('apartment')">
+          <i class="bi bi-building"></i> شقة سكنية (240 ألف د.ت)
+        </button>
+        <button type="button" class="preset-chip" (click)="applyPreset('villa')">
+          <i class="bi bi-house-door-fill"></i> فيلا فاخرة (580 ألف د.ت)
+        </button>
+        <button type="button" class="preset-chip" (click)="applyPreset('land')">
+          <i class="bi bi-tree-fill"></i> ضيعة فلاحية (350 ألف د.ت)
+        </button>
+        <button type="button" class="preset-chip" (click)="applyPreset('lot')">
+          <i class="bi bi-grid-3x3-gap-fill"></i> مقسم مهيأ (175 ألف د.ت)
+        </button>
+      </div>
+    </div>
+
+    <!-- Stepper Navigation Bar -->
+    <div class="stepper-nav" *ngIf="false">
+      <div class="step-item" [class.active]="currentStep === 1" [class.completed]="currentStep > 1" (click)="setStep(1)">
+        <div class="step-num"><i class="bi bi-check-lg" *ngIf="currentStep > 1"></i><span *ngIf="currentStep <= 1">1</span></div>
+        <span class="step-title">المطلب الإداري</span>
+      </div>
+      <div class="step-connector" [class.active]="currentStep > 1"></div>
+      <div class="step-item" [class.active]="currentStep === 2" [class.completed]="currentStep > 2" (click)="setStep(2)">
+        <div class="step-num"><i class="bi bi-check-lg" *ngIf="currentStep > 2"></i><span *ngIf="currentStep <= 2">2</span></div>
+        <span class="step-title">الرسم والعقار</span>
+      </div>
+      <div class="step-connector" [class.active]="currentStep > 2"></div>
+      <div class="step-item" [class.active]="currentStep === 3" [class.completed]="currentStep > 3" (click)="setStep(3)">
+        <div class="step-num"><i class="bi bi-check-lg" *ngIf="currentStep > 3"></i><span *ngIf="currentStep <= 3">3</span></div>
+        <span class="step-title">الأطراف والعقد</span>
+      </div>
+      <div class="step-connector" [class.active]="currentStep > 3"></div>
+      <div class="step-item" [class.active]="currentStep === 4" (click)="setStep(4)">
+        <div class="step-num">4</div>
+        <span class="step-title">المؤيدات والوثائق</span>
+      </div>
+    </div>
+
+    <form [formGroup]="addFileForm" (ngSubmit)="submitAddFile()" class="simple-file-form">
+      <div class="simple-form-grid">
+        <div class="form-group">
+          <label for="simple-file-number">رقم الملف <span class="text-danger">*</span></label>
+          <input id="simple-file-number" class="form-control" formControlName="fileNumber" autocomplete="off">
+          <small *ngIf="addFileForm.controls['fileNumber'].touched && addFileForm.controls['fileNumber'].invalid">هذا الحقل إجباري.</small>
+        </div>
+        <div class="form-group">
+          <label for="simple-lot-number">رقم الرسم العقاري <span class="text-danger">*</span></label>
+          <input id="simple-lot-number" class="form-control" formControlName="lotNumber" autocomplete="off">
+          <small *ngIf="addFileForm.controls['lotNumber'].touched && addFileForm.controls['lotNumber'].invalid">هذا الحقل إجباري.</small>
+        </div>
+        <div class="form-group full-width">
+          <label for="simple-subject">موضوع المطلب <span class="text-danger">*</span></label>
+          <input id="simple-subject" class="form-control" formControlName="subject">
+          <small *ngIf="addFileForm.controls['subject'].touched && addFileForm.controls['subject'].invalid">هذا الحقل إجباري.</small>
+        </div>
+        <div class="form-group">
+          <label for="simple-filing-date">تاريخ الإيداع <span class="text-danger">*</span></label>
+          <input id="simple-filing-date" type="date" class="form-control" formControlName="filingDate">
+        </div>
+        <div class="form-group">
+          <label for="simple-source">مصدر المطلب</label>
+          <select id="simple-source" class="form-select" formControlName="source">
+            <option value="CITIZEN_REQUEST">طلب مواطن</option>
+            <option value="REGISTRY_REQUEST">إدارة الملكية العقارية</option>
+            <option value="COURT_REQUEST">إحالة قضائية</option>
+            <option value="OTHER">أخرى</option>
+          </select>
+        </div>
+        <div class="form-group full-width">
+          <label for="simple-operation-type">نوع العملية القانونية <span class="text-danger">*</span></label>
+          <select id="simple-operation-type" class="form-select" formControlName="operationType">
+            <option value="">حدد نوع العملية</option>
+            <option value="TRANSFER">نقل ملكية أو بيع</option>
+            <option value="INHERITANCE">ترسيم إرث أو انتقال ملكية</option>
+            <option value="FIRST_REGISTRATION">ترسيم أو تسجيل أول</option>
+            <option value="MORTGAGE_RELEASE">رفع رهن أو تشطيب</option>
+            <option value="COURT_ORDER">تنفيذ حكم أو قرار قضائي</option>
+            <option value="OTHER">عملية أخرى</option>
+          </select>
+        </div>
+
+        <section class="form-section full-width">
+          <h4>بيانات الرسم والعقار</h4>
+          <p>المعلومات الأساسية التي تساعد على مطابقة المطلب مع السجل العقاري.</p>
+        </section>
+        <div class="form-group">
+          <label for="simple-title-name">اسم الرسم العقاري <span class="text-danger">*</span></label>
+          <input id="simple-title-name" class="form-control" formControlName="titleName" placeholder="مثال: الرسم العقاري 48921 تونس">
+          <small *ngIf="addFileForm.controls['titleName'].touched && addFileForm.controls['titleName'].invalid">هذا الحقل إجباري.</small>
+        </div>
+        <div class="form-group">
+          <label for="simple-region">الإدارة الجهوية <span class="text-danger">*</span></label>
+          <select id="simple-region" class="form-select" formControlName="region">
+            <option *ngFor="let reg of regions" [value]="reg">{{ reg }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="simple-location">الموقع</label>
+          <input id="simple-location" class="form-control" formControlName="location" placeholder="الحي أو المنطقة العقارية">
+        </div>
+        <div class="form-group">
+          <label for="simple-property-type">طبيعة العقار</label>
+          <select id="simple-property-type" class="form-select" formControlName="propertyType">
+            <option value="">اختر عند توفر المعلومة</option>
+            <option *ngFor="let type of propertyTypes" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="simple-area">المساحة بالمتر المربع</label>
+          <input id="simple-area" type="number" min="1" class="form-control" formControlName="surfaceM2">
+        </div>
+
+        <section class="form-section full-width">
+          <h4>أطراف العملية والوضعية القانونية</h4>
+          <p>تُستكمل بيانات الأطراف بحسب نوع العملية، مثل البيع أو الإرث أو رفع الرهن.</p>
+        </section>
+        <div class="form-group">
+          <label for="simple-previous-owner">المالك السابق أو صاحب الحق</label>
+          <input id="simple-previous-owner" class="form-control" formControlName="previousOwner">
+        </div>
+        <div class="form-group">
+          <label for="simple-new-owner">المالك الجديد أو المستفيد</label>
+          <input id="simple-new-owner" class="form-control" formControlName="newOwner">
+        </div>
+        <div class="form-group">
+          <label for="simple-amount">قيمة العملية بالدينار التونسي</label>
+          <input id="simple-amount" type="number" min="1" class="form-control" formControlName="saleAmountTnd">
+        </div>
+        <div class="form-group">
+          <label for="simple-charges">الرهون والتحملات أو ملاحظات قانونية</label>
+          <input id="simple-charges" class="form-control" formControlName="chargesStatus">
+        </div>
+        <label class="opposition-check full-width">
+          <input type="checkbox" formControlName="hasOpposition">
+          <span>يوجد اعتراض أو قيد احتياطي معروف على الرسم</span>
+        </label>
+
+        <section class="form-section full-width">
+          <h4>الوثائق المرفقة</h4>
+          <p>حدد الوثائق الموجودة فعلياً، ثم أدخل رقمها وتاريخها.</p>
+        </section>
+        <div class="document-fields full-width">
+          <div class="document-entry">
+            <label class="document-choice"><input type="checkbox" [(ngModel)]="selectedDocs.saleContract" [ngModelOptions]="{standalone: true}"><span>عقد البيع أو سند التملك</span></label>
+            <div class="document-details" *ngIf="selectedDocs.saleContract"><input class="form-control" placeholder="رقم الوثيقة" [(ngModel)]="documentDetails.saleContract.number" [ngModelOptions]="{standalone: true}"><input type="date" class="form-control" aria-label="تاريخ عقد البيع" [(ngModel)]="documentDetails.saleContract.date" [ngModelOptions]="{standalone: true}"></div>
+          </div>
+          <div class="document-entry">
+            <label class="document-choice"><input type="checkbox" [(ngModel)]="selectedDocs.taxReceipt" [ngModelOptions]="{standalone: true}"><span>شهادة الخلاص والتسجيل الجبائي</span></label>
+            <div class="document-details" *ngIf="selectedDocs.taxReceipt"><input class="form-control" placeholder="رقم الوثيقة" [(ngModel)]="documentDetails.taxReceipt.number" [ngModelOptions]="{standalone: true}"><input type="date" class="form-control" aria-label="تاريخ الشهادة الجبائية" [(ngModel)]="documentDetails.taxReceipt.date" [ngModelOptions]="{standalone: true}"></div>
+          </div>
+          <div class="document-entry">
+            <label class="document-choice"><input type="checkbox" [(ngModel)]="selectedDocs.cadastralPlan" [ngModelOptions]="{standalone: true}"><span>المثال الهندسي أو وثيقة المسح</span></label>
+            <div class="document-details" *ngIf="selectedDocs.cadastralPlan"><input class="form-control" placeholder="رقم الوثيقة" [(ngModel)]="documentDetails.cadastralPlan.number" [ngModelOptions]="{standalone: true}"><input type="date" class="form-control" aria-label="تاريخ المثال الهندسي" [(ngModel)]="documentDetails.cadastralPlan.date" [ngModelOptions]="{standalone: true}"></div>
+          </div>
+          <div class="document-entry">
+            <label class="document-choice"><input type="checkbox" [(ngModel)]="selectedDocs.powerOfAttorney" [ngModelOptions]="{standalone: true}"><span>التوكيل أو ما يثبت النيابة</span></label>
+            <div class="document-details" *ngIf="selectedDocs.powerOfAttorney"><input class="form-control" placeholder="رقم الوثيقة" [(ngModel)]="documentDetails.powerOfAttorney.number" [ngModelOptions]="{standalone: true}"><input type="date" class="form-control" aria-label="تاريخ التوكيل" [(ngModel)]="documentDetails.powerOfAttorney.date" [ngModelOptions]="{standalone: true}"></div>
+          </div>
+          <div class="document-entry">
+            <label class="document-choice"><input type="checkbox" [(ngModel)]="selectedDocs.mortgageRelease" [ngModelOptions]="{standalone: true}"><span>شهادة رفع اليد عن الرهن</span></label>
+            <div class="document-details" *ngIf="selectedDocs.mortgageRelease"><input class="form-control" placeholder="رقم الوثيقة" [(ngModel)]="documentDetails.mortgageRelease.number" [ngModelOptions]="{standalone: true}"><input type="date" class="form-control" aria-label="تاريخ رفع اليد" [(ngModel)]="documentDetails.mortgageRelease.date" [ngModelOptions]="{standalone: true}"></div>
+          </div>
+          <div class="document-entry">
+            <label class="document-choice"><input type="checkbox" [(ngModel)]="selectedDocs.inheritanceProof" [ngModelOptions]="{standalone: true}"><span>حجة وفاة أو إراثة</span></label>
+            <div class="document-details" *ngIf="selectedDocs.inheritanceProof"><input class="form-control" placeholder="رقم الوثيقة" [(ngModel)]="documentDetails.inheritanceProof.number" [ngModelOptions]="{standalone: true}"><input type="date" class="form-control" aria-label="تاريخ حجة الإراثة" [(ngModel)]="documentDetails.inheritanceProof.date" [ngModelOptions]="{standalone: true}"></div>
+          </div>
+          <div class="document-entry">
+            <label class="document-choice"><input type="checkbox" [(ngModel)]="selectedDocs.courtJudgment" [ngModelOptions]="{standalone: true}"><span>حكم أو قرار قضائي نهائي</span></label>
+            <div class="document-details" *ngIf="selectedDocs.courtJudgment"><input class="form-control" placeholder="رقم الوثيقة" [(ngModel)]="documentDetails.courtJudgment.number" [ngModelOptions]="{standalone: true}"><input type="date" class="form-control" aria-label="تاريخ الحكم" [(ngModel)]="documentDetails.courtJudgment.date" [ngModelOptions]="{standalone: true}"></div>
+          </div>
+          <div class="document-entry">
+            <label class="document-choice"><input type="checkbox" [(ngModel)]="selectedDocs.otherDocument" [ngModelOptions]="{standalone: true}"><span>وثيقة قانونية أخرى</span></label>
+            <div class="document-details" *ngIf="selectedDocs.otherDocument"><input class="form-control" placeholder="نوع ورقم الوثيقة" [(ngModel)]="documentDetails.otherDocument.number" [ngModelOptions]="{standalone: true}"><input type="date" class="form-control" aria-label="تاريخ الوثيقة الأخرى" [(ngModel)]="documentDetails.otherDocument.date" [ngModelOptions]="{standalone: true}"></div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="submitError" class="alert alert-danger" role="alert">{{ submitError }}</div>
+
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeAddModal()">إلغاء</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading || addFileForm.invalid">
+          {{ isLoading ? 'جارٍ الإنشاء...' : 'إنشاء الملف' }}
+        </button>
+      </footer>
+    </form>
+    
+    <form *ngIf="false" [formGroup]="addFileForm" (ngSubmit)="submitAddFile()" class="modal-body">
+      
+      <!-- STEP 1: Admin & Demand Details -->
+      <div class="step-content" *ngIf="currentStep === 1">
+        <div class="section-banner mb-3">
+          <i class="bi bi-card-checklist text-primary fs-4"></i>
+          <div>
+            <h4 class="m-0">البيانات الإدارية للمطلب العقاري</h4>
+            <span class="text-muted small">تسجيل رقم المطلب وتاريخ إيداعه ومصدره لدى ديوان الملكية</span>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="fileNumber" class="form-label fw-bold">رقم الملف الإداري <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-hash"></i></span>
+                <input 
+                  type="text" 
+                  id="fileNumber"
+                  class="form-control" 
+                  formControlName="fileNumber"
+                  placeholder="FILE-2026-001">
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="lotNumber" class="form-label fw-bold">رقم المطلب / القطعة <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-tag"></i></span>
+                <input 
+                  type="text" 
+                  id="lotNumber"
+                  class="form-control" 
+                  formControlName="lotNumber"
+                  placeholder="LOT-101">
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="form-group">
+              <label for="subject" class="form-label fw-bold">موضوع المطلب والعملية المطلوبة <span class="text-danger">*</span></label>
+              <input 
+                type="text" 
+                id="subject"
+                class="form-control" 
+                formControlName="subject"
+                placeholder="مثال: مطلب ترسيم عقد بيع شقة سكنية ونقل الملكية بالدفتر العقاري">
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="filingDate" class="form-label fw-bold">تاريخ الإيداع الرسمي <span class="text-danger">*</span></label>
+              <input 
+                type="date" 
+                id="filingDate"
+                class="form-control" 
+                formControlName="filingDate">
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="source" class="form-label fw-bold">مصدر المطلب</label>
+              <select id="source" class="form-select form-control" formControlName="source">
+                <option value="CITIZEN_REQUEST">طلب من مواطن / محامي / عدل إشهاد</option>
+                <option value="REGISTRY_REQUEST">طلب من إدارة الملكية العقارية</option>
+                <option value="COURT_REQUEST">إحالة من المحكمة العقارية أو الابتدائية</option>
+                <option value="OTHER">أخرى</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Cadastral & Technical Details -->
+      <div class="step-content" *ngIf="currentStep === 2">
+        <div class="section-banner mb-3">
+          <i class="bi bi-geo-alt-fill text-danger fs-4"></i>
+          <div>
+            <h4 class="m-0">البيانات الفنية للرسم العقاري</h4>
+            <span class="text-muted small">تحديد الرسم العقاري، الإدارة الجهوية، الموقع، المساحة والصبغة</span>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="titleName" class="form-label fw-bold">اسم ورقم الرسم العقاري <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-journal-bookmark-fill text-primary"></i></span>
+                <input 
+                  type="text" 
+                  id="titleName"
+                  class="form-control" 
+                  formControlName="titleName"
+                  placeholder="مثال: الرسم العقاري 48921 تونس 'الوفاء'">
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="region" class="form-label fw-bold">الإدارة الجهوية للملكية العقارية <span class="text-danger">*</span></label>
+              <select id="region" class="form-select form-control" formControlName="region">
+                <option *ngFor="let reg of regions" [value]="reg">{{ reg }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-5">
+            <div class="form-group">
+              <label for="location" class="form-label fw-bold">الموقع والمنطقة العقارية <span class="text-danger">*</span></label>
+              <input 
+                type="text" 
+                id="location"
+                class="form-control" 
+                formControlName="location"
+                placeholder="مثال: النصر 2، أريانة">
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="form-group">
+              <label for="surfaceM2" class="form-label fw-bold">المساحة (م²) <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input 
+                  type="number" 
+                  id="surfaceM2"
+                  class="form-control" 
+                  formControlName="surfaceM2"
+                  placeholder="145">
+                <span class="input-group-text bg-light">م²</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group">
+              <label for="propertyType" class="form-label fw-bold">طبيعة العقار وصبغته <span class="text-danger">*</span></label>
+              <select id="propertyType" class="form-select form-control" formControlName="propertyType">
+                <option *ngFor="let pt of propertyTypes" [value]="pt">{{ pt }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Parties, Rights & Financial Conditions -->
+      <div class="step-content" *ngIf="currentStep === 3">
+        <div class="section-banner mb-3">
+          <i class="bi bi-people-fill text-success fs-4"></i>
+          <div>
+            <h4 class="m-0">أطراف المعاملة والحقوق المالية والرهون</h4>
+            <span class="text-muted small">تحديد هوية البائع، المشتري الجديد، مبلغ الصفقة ووضعية الرهون السابقة</span>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="previousOwner" class="form-label fw-bold">المالك المقيد سابقاً بالرسم (البائع / المتصرف) <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-person-dash text-secondary"></i></span>
+                <input 
+                  type="text" 
+                  id="previousOwner"
+                  class="form-control" 
+                  formControlName="previousOwner"
+                  placeholder="مثال: شركة البعث العقاري المستقبل">
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="newOwner" class="form-label fw-bold">المشتري الجديد (المكتسب للحق العيني) <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-person-check text-success"></i></span>
+                <input 
+                  type="text" 
+                  id="newOwner"
+                  class="form-control text-success fw-bold" 
+                  formControlName="newOwner"
+                  placeholder="مثال: السيد منير بن الهادي العبيدي (ب.ت.و عدد 07824190)">
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group">
+              <label for="saleAmountTnd" class="form-label fw-bold">مبلغ المعاملة أو القيمة المصرح بها (د.ت) <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input 
+                  type="number" 
+                  id="saleAmountTnd"
+                  class="form-control fw-bold" 
+                  formControlName="saleAmountTnd"
+                  placeholder="240000">
+                <span class="input-group-text bg-light">د.ت</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-8">
+            <div class="form-group">
+              <label for="chargesStatus" class="form-label fw-bold">بيان الرهون والتحملات السابقة</label>
+              <input 
+                type="text" 
+                id="chargesStatus"
+                class="form-control" 
+                formControlName="chargesStatus"
+                placeholder="مثال: خالٍ من الديون والرهون والتحملات السابقة">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: Documents and Verification Preview -->
+      <div class="step-content" *ngIf="currentStep === 4">
+        <div class="section-banner mb-3">
+          <i class="bi bi-file-earmark-check-fill text-info fs-4"></i>
+          <div>
+            <h4 class="m-0">المؤيدات والوثائق القانونية المرفقة</h4>
+            <span class="text-muted small">حدد السندات المودعة مع هذا المطلب لتمكين المتثبتين من مراجعتها</span>
+          </div>
+        </div>
+
+        <div class="docs-checklist mb-4">
+          <label class="doc-check-card" [class.selected]="selectedDocs.saleContract">
+            <input type="checkbox" [(ngModel)]="selectedDocs.saleContract" [ngModelOptions]="{standalone: true}">
+            <div class="doc-check-info">
+              <strong>📜 عقد بيع نهائي معرف به ومسجل بالقباضة المالية</strong>
+              <span class="doc-sub">العقد الأصلي متضمناً هوية الأطراف وموضوع العقار والمبلغ المصرح به.</span>
+            </div>
+          </label>
+
+          <label class="doc-check-card" [class.selected]="selectedDocs.taxReceipt">
+            <input type="checkbox" [(ngModel)]="selectedDocs.taxReceipt" [ngModelOptions]="{standalone: true}">
+            <div class="doc-check-info">
+              <strong>🧾 شهادة إبراء ذمة وخلاص جبائي (معاليم التسجيل)</strong>
+              <span class="doc-sub">شهادة صادرة عن قباضة المالية تثبت استخلاص معاليم التسجيل ونقل الملكية.</span>
+            </div>
+          </label>
+
+          <label class="doc-check-card" [class.selected]="selectedDocs.cadastralPlan">
+            <input type="checkbox" [(ngModel)]="selectedDocs.cadastralPlan" [ngModelOptions]="{standalone: true}">
+            <div class="doc-check-info">
+              <strong>📐 مثال هندسي لديوان قيس الأراضي والمسح العقاري</strong>
+              <span class="doc-sub">مثال هندسي رسمي يحدد موقع ومساحة وحدود العقار موضوع الترسيم.</span>
+            </div>
+          </label>
+
+          <label class="doc-check-card" [class.selected]="selectedDocs.powerOfAttorney">
+            <input type="checkbox" [(ngModel)]="selectedDocs.powerOfAttorney" [ngModelOptions]="{standalone: true}">
+            <div class="doc-check-info">
+              <strong>✍️ توكيل قنصلي خاص لنقل الملكية (يتضمن تحفظ للمتثبت الأعلى)</strong>
+              <span class="doc-sub">توكيل محرر بالقنصلية التونسية بالخارج لتمثيل أحد الأطراف في المعاملة.</span>
+            </div>
+          </label>
+
+          <label class="doc-check-card" [class.selected]="selectedDocs.mortgageRelease">
+            <input type="checkbox" [(ngModel)]="selectedDocs.mortgageRelease" [ngModelOptions]="{standalone: true}">
+            <div class="doc-check-info">
+              <strong>🏦 شهادة رفع اليد والتشطيب على الرهن البنكي السابق</strong>
+              <span class="doc-sub">كتب رسمي صادر عن المؤسسة البنكية يرفع الرهن السابق الموظف على الرسم.</span>
+            </div>
+          </label>
+        </div>
+
+        <!-- Live Cadastral Card Summary -->
+        <div class="card live-summary-card">
+          <div class="card-header bg-light py-2">
+            <span class="fw-bold small text-primary"><i class="bi bi-eye-fill"></i> معاينة بطاقة الرسم العقاري للمتثبت والحافظ المساعد:</span>
+          </div>
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+              <div>
+                <span class="text-muted small">الرسم:</span>
+                <strong class="text-primary ms-1">{{ addFileForm.value.titleName }}</strong>
+                <span class="badge bg-light text-dark border ms-2">{{ addFileForm.value.region }}</span>
+              </div>
+              <div>
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                  المساحة: {{ addFileForm.value.surfaceM2 }} م² | القيمة: {{ addFileForm.value.saleAmountTnd }} د.ت
+                </span>
+              </div>
+            </div>
+            <div class="transfer-preview-mini p-2 bg-white rounded border d-flex justify-content-between align-items-center">
+              <span class="text-muted small"><i class="bi bi-person-dash"></i> {{ addFileForm.value.previousOwner }}</span>
+              <i class="bi bi-arrow-left text-primary"></i>
+              <span class="text-success fw-bold small"><i class="bi bi-person-check"></i> {{ addFileForm.value.newOwner }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation & Action Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeAddModal()">
+          إلغاء
+        </button>
+
+        <button type="button" class="btn btn-secondary" *ngIf="currentStep > 1" (click)="prevStep()">
+          <i class="bi bi-arrow-right"></i> السابق
+        </button>
+
+        <button type="button" class="btn btn-primary" *ngIf="currentStep < 4" (click)="nextStep()">
+          التالي <i class="bi bi-arrow-left"></i>
+        </button>
+
+        <button 
+          type="submit" 
+          class="btn btn-success" 
+          *ngIf="currentStep === 4" 
+          [disabled]="isLoading || addFileForm.invalid">
+          <span class="spinner-border spinner-border-sm ms-1" *ngIf="isLoading"></span>
+          <i class="bi bi-check-circle-fill ms-1" *ngIf="!isLoading"></i>
+          {{ isLoading ? 'جاري الإنشاء...' : '💾 إنشاء وحفظ الملف العقاري' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

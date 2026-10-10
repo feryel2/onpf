@@ -1,0 +1,105 @@
+.dashboard {
+  h2 {
+    margin-top: 0;
+    color: #1e3a8a;
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+  }
+
+  .statistics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+
+    .stat-card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      border-right: 4px solid transparent;
+
+      &:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+      }
+
+      .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        flex-shrink: 0;
+
+        &.total {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        &.new {
+          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        &.study {
+          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        &.pending {
+          background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        &.returned {
+          background: linear-gradient(135deg, #ff9a56 0%, #ff6a88 100%);
+        }
+
+        &.final {
+          background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        }
+
+        &.verifying {
+          background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+
+        &.approved {
+          background: linear-gradient(135deg, #13547a 0%, #80d0c0 100%);
+        }
+
+        &.closed {
+          background: linear-gradient(135deg, #746cc0 0%, #8ea7e9 100%);
+        }
+      }
+
+      .stat-content {
+        flex: 1;
+
+        .stat-label {
+          margin: 0;
+          font-size: 0.9rem;
+          color: #666;
+          font-weight: 500;
+        }
+
+        .stat-value {
+          margin: 8px 0 0 0;
+          font-size: 2rem;
+          font-weight: 700;
+          color: #1e3a8a;
+        }
+      }
+    }
+  }
+
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-size: 1.1rem;
+  }
+}

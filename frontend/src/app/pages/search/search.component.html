@@ -1,0 +1,93 @@
+<div class="search-page page-container" dir="rtl">
+	<header class="search-heading">
+		<div>
+			<h2><i class="bi bi-search"></i> البحث في الملفات</h2>
+			<p>ابحث برقم الملف أو الرسم العقاري أو موضوعه، ثم صفِّ النتائج حسب الحالة.</p>
+		</div>
+	</header>
+
+	<form class="search-form" (ngSubmit)="search()">
+		<label for="file-search">عبارة البحث</label>
+		<div class="search-controls">
+			<div class="query-field">
+				<i class="bi bi-search" aria-hidden="true"></i>
+				<input
+					id="file-search"
+					name="query"
+					type="search"
+					class="form-control"
+					[(ngModel)]="query"
+					placeholder="رقم الملف، رقم الرسم، الموضوع أو الملاحظات">
+			</div>
+			<select class="form-select status-select" name="status" [(ngModel)]="status" aria-label="حالة الملف">
+				<option value="">كل الحالات</option>
+				<option value="NEW">جديد</option>
+				<option value="UNDER_STUDY">قيد الدراسة</option>
+				<option value="AWAITING_VERIFICATION">في انتظار التثبت</option>
+				<option value="UNDER_VERIFICATION">قيد التثبت</option>
+				<option value="RETURNED_FOR_CORRECTION">مرجع للتصحيح</option>
+				<option value="AWAITING_FINAL_VERIFICATION">في انتظار التثبت النهائي</option>
+				<option value="UNDER_FINAL_VERIFICATION">قيد التثبت النهائي</option>
+				<option value="APPROVED">مصادق عليه</option>
+				<option value="CLOSED">مغلق</option>
+			</select>
+			<button class="btn btn-primary" type="submit" [disabled]="loading">
+				<i class="bi bi-search"></i> بحث
+			</button>
+			<button class="btn btn-outline-secondary" type="button" (click)="clear()" [disabled]="loading">
+				<i class="bi bi-x-circle"></i> مسح
+			</button>
+		</div>
+	</form>
+
+	<div *ngIf="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+
+	<section class="results-section" aria-live="polite">
+		<div class="results-heading">
+			<h3>النتائج</h3>
+			<span>{{ totalElements }} ملف</span>
+		</div>
+
+		<div *ngIf="loading" class="results-message">
+			<span class="spinner-border spinner-border-sm" role="status"></span>
+			جارٍ البحث عن الملفات...
+		</div>
+
+		<div class="table-responsive results-table" *ngIf="!loading && files.length">
+			<table class="table align-middle mb-0">
+				<thead>
+					<tr>
+						<th>رقم الملف</th>
+						<th>رقم الرسم العقاري</th>
+						<th>موضوع الملف</th>
+						<th>تاريخ الإيداع</th>
+						<th>الحالة</th>
+						<th>المسؤول الحالي</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr *ngFor="let file of files">
+						<td><a class="file-number" [routerLink]="['/files', file.id]">{{ file.fileNumber }}</a></td>
+						<td>{{ file.lotNumber }}</td>
+						<td>{{ file.subject }}</td>
+						<td>{{ file.filingDate }}</td>
+						<td><span class="status-label">{{ statusLabel(file.status) }}</span></td>
+						<td>{{ file.responsible || file.assignedTo || file.studyResponsible || 'غير معيّن' }}</td>
+						<td><a class="btn btn-sm btn-outline-secondary" [routerLink]="['/files', file.id]">تفاصيل</a></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div *ngIf="!loading && searched && !errorMessage && !files.length" class="results-message empty-state">
+			لا توجد ملفات مطابقة لمعايير البحث.
+		</div>
+
+		<nav *ngIf="!loading && totalElements > pageSize" class="pagination-controls" aria-label="صفحات النتائج">
+			<button class="btn btn-outline-secondary btn-sm" (click)="search(page - 1)" [disabled]="!hasPreviousPage">السابق</button>
+			<span>صفحة {{ page + 1 }} من {{ totalPages }}</span>
+			<button class="btn btn-outline-secondary btn-sm" (click)="search(page + 1)" [disabled]="!hasNextPage">التالي</button>
+		</nav>
+	</section>
+</div>

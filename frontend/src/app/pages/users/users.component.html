@@ -1,0 +1,106 @@
+<div class="users-page page-container" dir="rtl">
+	<header class="page-heading">
+		<div>
+			<h2><i class="bi bi-people"></i> المستخدمون والصلاحيات</h2>
+			<p>إدارة حسابات محرري الملفات والمتثبتين.</p>
+		</div>
+		<button class="btn btn-primary" type="button" (click)="openCreate()">
+			<i class="bi bi-person-plus"></i> مستخدم جديد
+		</button>
+	</header>
+
+	<div *ngIf="successMessage" class="alert alert-success" role="status">{{ successMessage }}</div>
+	<div *ngIf="errorMessage && !showForm" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+
+	<div *ngIf="loading" class="state-message">
+		<span class="spinner-border spinner-border-sm" role="status"></span> جارٍ تحميل المستخدمين...
+	</div>
+
+	<div *ngIf="!loading && !errorMessage && users.length" class="table-responsive users-table">
+		<table class="table align-middle mb-0">
+			<thead>
+				<tr>
+					<th>المستخدم</th>
+					<th>اسم الدخول</th>
+					<th>البريد الإلكتروني</th>
+					<th>الدور</th>
+					<th>الحالة</th>
+					<th>تاريخ الإنشاء</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr *ngFor="let user of users">
+					<td><strong>{{ user.fullName }}</strong></td>
+					<td>{{ user.username }}</td>
+					<td>{{ user.email }}</td>
+					<td>{{ roleLabel(user.role) }}</td>
+					<td><span class="account-state" [class.inactive]="!user.isActive">{{ user.isActive ? 'نشط' : 'معطل' }}</span></td>
+					<td>{{ user.createdAt ? (user.createdAt | date:'dd/MM/yyyy') : '—' }}</td>
+					<td class="actions-cell">
+						<button class="btn btn-sm btn-outline-secondary" type="button" (click)="openEdit(user)" title="تعديل المستخدم" aria-label="تعديل المستخدم">
+							<i class="bi bi-pencil"></i>
+						</button>
+						<button class="btn btn-sm" [class.btn-outline-danger]="user.isActive" [class.btn-outline-success]="!user.isActive"
+							type="button" (click)="toggleActive(user)" [disabled]="user.isActive && user.username === auth.currentUserValue?.username"
+							[title]="user.isActive ? 'تعطيل الحساب' : 'تفعيل الحساب'" [attr.aria-label]="user.isActive ? 'تعطيل الحساب' : 'تفعيل الحساب'">
+							<i class="bi" [ngClass]="user.isActive ? 'bi-person-slash' : 'bi-person-check'"></i>
+						</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<div *ngIf="!loading && !errorMessage && !users.length" class="state-message empty-state">
+		لا يوجد مستخدمون.
+	</div>
+
+	<div class="modal-backdrop-custom" *ngIf="showForm">
+		<section class="user-dialog" role="dialog" aria-modal="true" aria-labelledby="user-form-title" dir="rtl">
+			<header class="dialog-heading">
+				<h3 id="user-form-title">{{ editingId ? 'تعديل المستخدم' : 'إنشاء مستخدم جديد' }}</h3>
+				<button class="btn-close" type="button" (click)="closeForm()" aria-label="إغلاق"></button>
+			</header>
+
+			<div *ngIf="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+
+			<form (ngSubmit)="save()">
+				<div class="form-grid">
+					<div class="form-field">
+						<label for="user-full-name">الاسم الكامل</label>
+						<input id="user-full-name" class="form-control" name="fullName" [(ngModel)]="form.fullName" required>
+					</div>
+					<div class="form-field">
+						<label for="user-username">اسم الدخول</label>
+						<input id="user-username" class="form-control" name="username" [(ngModel)]="form.username" [readonly]="editingId !== null" required>
+					</div>
+					<div class="form-field">
+						<label for="user-email">البريد الإلكتروني</label>
+						<input id="user-email" class="form-control" type="email" name="email" [(ngModel)]="form.email" required>
+					</div>
+					<div class="form-field">
+						<label for="user-role">الدور</label>
+						<select id="user-role" class="form-select" name="role" [(ngModel)]="form.role" required>
+							<option value="EDITOR">محرر</option>
+							<option value="VERIFIER">متثبت</option>
+							<option value="SENIOR_VERIFIER">متثبت أعلى</option>
+						</select>
+					</div>
+					<div class="form-field" *ngIf="editingId === null">
+						<label for="user-password">كلمة المرور الأولية</label>
+						<input id="user-password" class="form-control" type="password" name="password" [(ngModel)]="form.password" minlength="8" required autocomplete="new-password">
+						<small>8 أحرف على الأقل</small>
+					</div>
+				</div>
+				<footer class="dialog-actions">
+					<button class="btn btn-outline-secondary" type="button" (click)="closeForm()">إلغاء</button>
+					<button class="btn btn-primary" type="submit" [disabled]="saving">
+						<span *ngIf="saving" class="spinner-border spinner-border-sm ms-1" role="status"></span>
+						{{ editingId ? 'حفظ التعديلات' : 'إنشاء الحساب' }}
+					</button>
+				</footer>
+			</form>
+		</section>
+	</div>
+</div>

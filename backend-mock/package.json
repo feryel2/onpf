@@ -1,0 +1,18 @@
+{
+  "name": "onpf-api-mock",
+  "version": "1.0.0",
+  "description": "ONPF Mock API Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["api", "mock", "onpf"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "cors": "^2.8.5"
+  }
+}

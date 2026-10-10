@@ -1,0 +1,14 @@
+<header class="header">
+  <div class="header-content">
+    <div class="header-left">
+      <span class="breadcrumb">{{ currentPage }}</span>
+    </div>
+    <div class="header-right">
+      <span class="time">{{ currentTime }}</span>
+      <div class="user-menu">
+        <span>{{ currentUser?.fullName }}</span>
+        <span *ngIf="currentUser" class="user-role">{{ roleLabel }}</span>
+      </div>
+    </div>
+  </div>
+</header>

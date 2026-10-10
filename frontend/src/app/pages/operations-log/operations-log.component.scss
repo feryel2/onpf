@@ -1,0 +1,57 @@
+.operations-page {
+	padding: 1.5rem 2rem;
+
+	.page-heading, .heading-actions {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.page-heading {
+		margin-bottom: 1.25rem;
+		h2 { margin: 0; color: #1e3a8a; font-size: 1.5rem; }
+		p { margin: 0.5rem 0 0; color: #64748b; }
+	}
+
+	.heading-actions { justify-content: flex-start; }
+	.record-count { color: #475569; font-weight: 600; white-space: nowrap; }
+
+	.operations-table {
+		border: 1px solid #e2e8f0;
+		border-radius: 6px;
+		background: #ffffff;
+		th, td { text-align: right; }
+		th { white-space: nowrap; color: #475569; background: #f8fafc; }
+		td { max-width: 280px; }
+		a { color: #1d4ed8; text-decoration: none; font-weight: 600; }
+		a:hover { text-decoration: underline; }
+		.timestamp { white-space: nowrap; }
+		.role-label { display: block; color: #64748b; font-size: 0.8rem; }
+		.notes-cell { min-width: 150px; }
+	}
+
+	.state-message {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.6rem;
+		min-height: 120px;
+		color: #64748b;
+		border: 1px dashed #cbd5e1;
+		border-radius: 6px;
+	}
+
+	.pagination-controls {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 1rem;
+		margin-top: 1rem;
+	}
+
+	@media (max-width: 640px) {
+		padding: 1rem;
+		.page-heading { align-items: flex-start; flex-direction: column; }
+	}
+}
